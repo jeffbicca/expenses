@@ -1,7 +1,8 @@
 import 'package:flutter/material.dart';
+import 'package:intl/intl.dart';
 
 class TransactionForm extends StatefulWidget {
-  final void Function(String, double) onSubmit;
+  final void Function(String, double, DateTime) onSubmit;
 
   TransactionForm(this.onSubmit);
 
@@ -11,18 +12,35 @@ class TransactionForm extends StatefulWidget {
 
 class _TransactionFormState extends State<TransactionForm> {
   final titleController = TextEditingController();
-
   final valueController = TextEditingController();
+  DateTime selectedDate = DateTime.now();
 
   _submitForm() {
     final title = titleController.text;
     final value = double.tryParse(valueController.text) ?? 0.0;
 
-    if (title.isEmpty || value <= 0) {
+    if (title.isEmpty || value <= 0 || selectedDate == null) {
       return;
     }
 
-    widget.onSubmit(title, value);
+    widget.onSubmit(title, value, selectedDate);
+  }
+
+  _showDatePicker() {
+    showDatePicker(
+      context: context,
+      initialDate: DateTime.now(),
+      firstDate: DateTime(2019),
+      lastDate: DateTime.now(),
+    ).then((pickedDate) {
+      if (pickedDate == null) {
+        return;
+      }
+
+      setState(() {
+        selectedDate = pickedDate;
+      });
+    });
   }
 
   @override
@@ -44,12 +62,40 @@ class _TransactionFormState extends State<TransactionForm> {
               decoration: InputDecoration(labelText: 'Valor (R\$)'),
               onSubmitted: (_) => _submitForm(),
             ),
+            Container(
+              height: 70,
+              child: Row(
+                children: [
+                  Expanded(
+                    child: Text(selectedDate == null
+                        ? 'Nenhuma data selecionada!'
+                        : 'Data selecionada: ${DateFormat('dd/MM/y').format(selectedDate)}'),
+                  ),
+                  FlatButton(
+                    textColor: Theme.of(context).primaryColor,
+                    child: Text(
+                      'Selecionar Data',
+                      style: TextStyle(
+                        fontWeight: FontWeight.bold,
+                      ),
+                    ),
+                    onPressed: _showDatePicker,
+                  )
+                ],
+              ),
+            ),
             Row(
               mainAxisAlignment: MainAxisAlignment.end,
               children: [
-                FlatButton(
-                  child: Text('Nova Transação'),
-                  textColor: Colors.purple,
+                RaisedButton(
+                  child: Text(
+                    'Nova Transação',
+                    style: TextStyle(
+                      color: Colors.white,
+                      fontWeight: FontWeight.bold,
+                    ),
+                  ),
+                  color: Theme.of(context).primaryColor,
                   onPressed: _submitForm,
                 ),
               ],
